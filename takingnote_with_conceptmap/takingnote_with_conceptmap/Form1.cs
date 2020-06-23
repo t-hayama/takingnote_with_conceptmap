@@ -32,6 +32,77 @@ namespace takingnote_with_conceptmap
             al_links = new ArrayList();
 
             this.richTextBox1.KeyDown += RichTextBox1_KeyDown;
+            this.panel1.MouseDown += Panel1_MouseDown;
+            this.panel1.MouseUp += Panel1_MouseUp;
+            this.panel1.MouseMove += Panel1_MouseMove;
+        }
+
+        Node node_move = new Node();
+
+        private void Panel1_MouseMove(object sender, MouseEventArgs e)
+        {
+            try
+            {
+
+            if (node_move != null) {
+                node_move.rec.X = e.X;
+                node_move.rec.Y = e.Y;
+
+                g.Clear(Color.White);
+                foreach (Node nd in al_nodes)
+                {
+                    nd.repainting(g);
+                }
+
+            }
+            }
+            catch
+            {
+                Thread.Sleep(200);
+            }
+
+        }
+
+        private async void Panel1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (node_move != null)
+            {
+                node_move.flag_clicked = false;
+                node_move = null;
+                await Task.Run(() =>
+                {
+                    HeavyMethod1(g, new ArrayList());
+                });
+            }
+
+        }
+
+        private void Panel1_MouseDown(object sender, MouseEventArgs e)
+        {
+            try
+            {
+                g.Clear(Color.White);
+
+                foreach (Node nd in al_nodes)
+                {
+                    if (nd.rec.X - 10 < e.X && e.X < nd.rec.X + nd.rec.Width * nd.concept.Length * nd.freq
+                        && nd.rec.Y - 10 < e.Y && e.Y < nd.rec.Y + (nd.rec.Height - 2) * nd.freq)
+                    {
+                        nd.flag_clicked = true;
+                        node_move = nd;
+                        break;
+                    }
+                }
+                foreach (Node nd in al_nodes)
+                {
+                    nd.repainting(g);
+                }
+            }
+            catch
+            {
+                Thread.Sleep(200);
+            }
+
         }
 
         async private void RichTextBox1_KeyDown(object sender, KeyEventArgs e)
@@ -124,7 +195,7 @@ namespace takingnote_with_conceptmap
 
             al_nodes.AddRange(al_nodes_tmp);
 
-            float length_s = 200f;
+            float length_s = 250f;
             float distance = 0.0f;
             float distance_x = 0.0f;
             float distance_y = 0.0f;
@@ -160,7 +231,7 @@ namespace takingnote_with_conceptmap
                             distance = length_s;
                         }
 
-                        force = (float)0.4 / distance / distance;
+                        force = (float)4.0 / distance / distance;
 
                         force_x = force_x - force * distance_x / distance;
                         force_y = force_y - force * distance_y / distance;
@@ -248,10 +319,16 @@ namespace takingnote_with_conceptmap
             public int font_size = 8;
             public int freq = 1;
             public ArrayList al_link = new ArrayList();
+            public Color color_fnt = Color.BlueViolet;
+            public Color color_fnt_clc = Color.Red;
+            public System.Drawing.Brush color_fnt2 = Brushes.BlueViolet;
+            public System.Drawing.Brush color_fnt_clc2 = Brushes.Red;
+            public bool flag_clicked = false;
+
 
             public Node()
             {
-                rec = new Rectangle(rand.Next(100, 400), rand.Next(100, 400), 10, 10);
+                rec = new Rectangle(rand.Next(10, 490), rand.Next(10, 490), 10, 10);
                 vx = 0.0;
                 vy = 0.0;
             }
@@ -260,7 +337,7 @@ namespace takingnote_with_conceptmap
             {
                 if (rec.X <= 0)
                 {
-                    rec.X = 1;
+                    rec.X = 10;
                 }
                 if (rec.X >= 500)
                 {
@@ -268,7 +345,7 @@ namespace takingnote_with_conceptmap
                 }
                 if (rec.Y <= 0)
                 {
-                    rec.Y = 1;
+                    rec.Y = 10;
                 }
                 if (rec.Y >= 500)
                 {
@@ -276,13 +353,24 @@ namespace takingnote_with_conceptmap
                 }
 
                 //g.DrawEllipse(new Pen(Brushes.DeepSkyBlue), rec);
-                g.DrawString(concept, new Font("MS UI Gothic", font_size*freq), Brushes.DeepSkyBlue, 
-                    rec.X - font_size * freq / 2
-                    , rec.Y - 12);
+                if (!flag_clicked)
+                {
+                    g.DrawString(concept, new Font("MS UI Gothic", font_size * freq), color_fnt2,
+                        rec.X
+                        , rec.Y);
+                }
+                else
+                {
+                    g.DrawString(concept, new Font("MS UI Gothic", font_size * freq), color_fnt_clc2,
+                        rec.X
+                        , rec.Y);
+                }
+//                g.DrawRectangle(new Pen(Brushes.Gray),rec);
+
                 foreach (Node node in al_link)
                 {
-                    Point point = new Point(node.rec.X, node.rec.Y);
-                    g.DrawLine(new Pen(Brushes.GreenYellow), new Point(rec.X, rec.Y), point);
+                    Point point = new Point(node.rec.X+node.concept.Length*8/2, node.rec.Y+node.rec.Height/2);
+                    g.DrawLine(new Pen(Brushes.GreenYellow), new Point(rec.X+(concept.Length*8)/2, rec.Y+rec.Height/2), point);
                 }
             }
 
